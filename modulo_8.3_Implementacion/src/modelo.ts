@@ -68,7 +68,10 @@ const crearColeccionDeCartasInicial = (infoCartas: InfoCarta[]): Carta[] => {
     crearCartaInicial(infoCartas.idFoto, infoCartas.imagen),
     crearCartaInicial(infoCartas.idFoto, infoCartas.imagen),
   ]);
+  //llamar a una funcion de barajar cartas, devuelve cartas barajadas mezcladas
+  //cons cartasMezcladas = barajarCartas(coleccionDeCartasNuevo)
   // obtenemos un array nuevo ocn cartas duplicadas
+  //devolveriamos - return cartasMezcladas;
   return coleccionDeCartasNuevo;
 };
 
@@ -80,49 +83,64 @@ export let cartas: Carta[] = crearColeccionDeCartasInicial(infoCartas);
     EstadoPartida = "PartidaNoIniciada", una vez que se pulse Iniciar partida el estado de la partida cambiaría a "CeroCartasLevantadas" y así sucesivamente.
   */
 //definimos el estado inicial de la partida
-let estadoPartida: EstadoPartida = "PartidaNoIniciada";
-//partimos de un array, cartas boca abajo e inactivas, es el array inicial, el punto de artida
-cartas = cartas.map((carta) => ({
-  ...carta, //copiamos todos los datos de la carta y le añadimos
-  estaVuelta: false, //carta boca abajo
-  estaActiva: false, //carta esta inactiva
-}));
+let estadoPartida: EstadoPartida = "PartidaNoIniciada"; //en vez de esto, el interface tablero
 
 //a por el estado cerocartaslevantadas, el inicio de partida
 const inicioDePartida = () => {
-  estadoPartida = "CeroCartasLevantadas"; //cambiamos el estado de la partida
-  cartas = cartas.map((carta) => ({
-    ...carta, //copiamos los datos de las cartas
-    estaActiva: true, //actualizamos el que las cartas se puedan clickar
-  }));
+  tablero.estadoPartida = "CeroCartasLevantadas"; //cambiamos el estado de la partida
+  const divs = document.querySelectorAll<HTMLDivElement>(
+    ".carta" /*o podemos poner,  la clase "carta" ? -- sí, lod divs seleccionaria TODOS los divs*/
+  );
+  divs.forEach((div) => {
+    // Agregamos el evento click a cada div
+    div.addEventListener("click", () => {
+      const index = div.dataset.index;
+      if (index !== undefined && index) {
+        const indiceANumero = parseInt(index, 10);
+        clickarCarta(indiceANumero);
+      }
+    });
+  });
 };
 
+const cambiarSrcImagen = (id: number) => {
+  const img = document.querySelector(`img[data-index="${id}"]`); //cojo la imagen que tiene ese index
+  if (img && img instanceof HTMLImageElement) {
+    img.src = cartas[id].imagen;
+  }
+};
+//esta funcion va a ui.ts
 //ponemos el evento click para manejar el estado de la partida
+//añadir lineas de index, ese es el paramtetro
 const clickarCarta = (id: number) => {
   //nos tiene que devolver SIEMPRE, 1 solo elemento; por lo tanto, el primer elemento que enecuentre
   /* .find devuelve el primer elemento del array que le indiquemos, en este caso el primer id que encuentra,
 y lo renombra como idCartaClickada */
   const idCartaClickada = cartas.find((carta) => carta.idFoto === id);
   // si no hay id O si no esta activa, devolver
-  if (!idCartaClickada || !idCartaClickada.estaActiva) return;
+  if (!idCartaClickada || !idCartaClickada.estaVuelta) return;
   //
   if (estadoPartida === "CeroCartasLevantadas") {
+    //cambiar src
     idCartaClickada.estaVuelta = true; //si hay una carta vuelta entonces
     estadoPartida = "UnaCartaLevantada";
   } else if (estadoPartida === "UnaCartaLevantada") {
+    //cambiar src
     // si hay una carta bocaarriba
     idCartaClickada.estaVuelta = true; //y damos vuelta otra carta
     estadoPartida = "DosCartasLevantadas"; // entonces, dos cartas levantadas
   }
 
+  /* darle eventoclick a los divs del apartado 5, y por cada carta vamos a utilizar clickCarta*/
   //hay que comprobar que las dos cartas sea iguales
+  //hasta la 134 no son necesarias
   const cartasLevantadas = cartas.filter((carta) => !carta.estaVuelta);
   if (
     cartasLevantadas.length === 2 &&
     cartasLevantadas[0].idFoto === cartasLevantadas[1].idFoto
   ) {
     //si las cartas sin iguales, las hacemos NOinteractivas para que no se puedan volver a tocar
-    cartasLevantadas.forEach((carta) => (carta.estaActiva = false));
+    cartasLevantadas.forEach((carta) => (carta.estaVuelta = false));
     estadoPartida = "CeroCartasLevantadas"; //se pueden volver a clickar cartas
   }
 };
